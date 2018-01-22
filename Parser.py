@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
 import json
 import csv
 from pprint import pprint
@@ -10,6 +11,7 @@ class Myapp:
     parseData = None # parsed Data from geojson file
     savejson = True # init
     savecsv = False
+    file_loaded = False
 
     type = False
     name = False
@@ -24,13 +26,13 @@ class Myapp:
     category = False
     geometry = False
 
+    # GUI widgets
     def __init__(self,parent):
 
         attribute_button_width = 10
         button_width = 6
         button_padx = "2m"
         button_pady = "1m"
-
 
         self.fb = IntVar() # for format button
         self.fb.set(0) # initializing the choice, i.e. Geojson
@@ -60,8 +62,6 @@ class Myapp:
 
         # button
         format_buttons = ["geojson","csv"]
-        attribute_buttons = ["type","name","ALIAS","REMARK","NTFDATE","SGG_OID","COL_ADM_SE","CoreNum","area",
-                            "perimeter","category","geometry"]
 
         # button frame 생성
         self.file_button_frame = Frame(self.button_frame,borderwidth=5)
@@ -74,7 +74,7 @@ class Myapp:
 
         Label(self.file_button_frame,text="about\nfile").pack()
         Label(self.format_button_frame,text="file\nformat").pack()
-        Label(self.attribute_button_frame,text="select\nattribute").pack()
+        Label(self.attribute_button_frame,text="select").pack()
 
         # file_button_frame button
 
@@ -85,17 +85,17 @@ class Myapp:
         self.load_file_button.pack(side=TOP)
         self.load_file_button.bind("<Button-1>",self.processOK)
 
+        # data show button
+        self.parse_button = Button(self.file_button_frame, text="parse",
+                                   width=button_width, padx=button_padx, pady=button_pady)
+        self.parse_button.pack(side=TOP)
+        self.parse_button.bind("<Button-1>", self.DataParser)
+
         # file save button
         self.save_file_button = Button(self.file_button_frame,text="save",
                                        width=button_width,padx=button_padx,pady=button_pady)
         self.save_file_button.pack(side=TOP)
         self.save_file_button.bind("<Button-1>",self.savefile)
-
-        # data show button
-        self.show_button = Button(self.file_button_frame,text="show",
-                                  width=button_width, padx=button_padx, pady=button_pady)
-        self.show_button.pack(side=TOP)
-        self.show_button.bind("<Button-1>",self.showData)
 
         # file_format frame button: RadioButton
         for var,format_button in enumerate(format_buttons):
@@ -192,11 +192,14 @@ class Myapp:
                                   command=self.setGeometry,
                                   width=attribute_button_width).pack(side=TOP)
         # Exit Button
+
+        # frame 생성
         self.cancel_button_frame = Frame(self.left_frame)
         self.cancel_button_frame.pack(side=BOTTOM, expand=YES, anchor=SW)
+
+        # exit button 생성
         self.cancel_button = Button(self.cancel_button_frame ,text="exit",
                                     width = button_width, padx=button_padx, pady=button_pady)
-
 
         self.cancel_button.pack(side=BOTTOM, anchor=S)
 
@@ -213,37 +216,50 @@ class Myapp:
         yscrollbar.pack(side=RIGHT, fill=Y)
         yscrollbar.config(command=data_text.yview)
 
+    # end GUI widgets
+
+    # functions
     """
     function processOK:
-    file load 함수 - geojson파일만 해당
+    file load method - geojson valid
     """
     def processOK(self,event):
 
-        open_file_path = filedialog.askopenfilenames(initialdir="C:/Users/LG/Downloads/Swallaby_DATA/Park_Transform",
-                                                   title="choose your file",
-                                                   filetypes=(("geojson files", "*.geojson"), ("all files", "*.*")))
+        try:
 
-        open_file_path = ''.join(open_file_path) # format convert to str(string)
+            open_file_path = filedialog.askopenfilenames(initialdir="C:/Users/LG/Downloads/Swallaby_DATA/Park_Transform",
+                                                         title="choose your file",
+                                                         filetypes=(("geojson files", "*.geojson"), ("all files", "*.*")))
 
-        with open(open_file_path,'rt',encoding='UTF8') as f:
-            self.Data = json.load(f)
+            open_file_path = ''.join(open_file_path) # format convert to str(string)
 
+            with open(open_file_path,'rt',encoding='UTF8') as f: # exception handling
+                self.Data = json.load(f)
 
-        for feature in self.Data['features']:
-            self.parseData = feature.get('properties')
+        except FileNotFoundError as e:
 
+            messagebox.showwarning("File load Warning","No File loaded:\n"+str(e)) # show Error Msg.
 
-        pprint(self.parseData)
+        else:
+
+            #pprint(self.Data)
+            self.file_loaded = True
+            messagebox.showinfo("Success","Successfully loaded:\n"+open_file_path)
+            f.close()
 
     """
      function savefile:
      save buttion click:event
-     boolean 변수값을 확인 후 parseData를 
+     boolean var: savejson,savecsv 확인 후 parseData를 
      geojson 또는 csv파일로 저장
     """
     def savefile(self,event):
 
-        if self.savejson is True and self.savecsv is False:
+        if self.file_loaded is False:
+
+          messagebox.showinfo("Error","No geojson file loaded")
+
+        elif self.savejson is True and self.savecsv is False:
             SaveFilePath = filedialog.askopenfilenames(initialdir="C:/Users",
                                                         title="save file",
                                                         filetypes=(("geojson files","*.geojson"),("all files","*.*")))
@@ -253,8 +269,9 @@ class Myapp:
             self.initValue()
 
         elif self.savejson is False and self.savecsv is True:
-            SaveFilePath = filedialog.askopenfilenames()
-
+            SaveFilePath = filedialog.askopenfilenames(initialdir="C:/Users",
+                                                       title="save file",
+                                                       filetypes=(("csv files","*.csv"),("all files","*.*")))
             SaveFilePath = ''.join(SaveFilePath)
             print(self.savejson)
             print(self.savecsv)
@@ -357,8 +374,16 @@ class Myapp:
 
 
     def showData(self,event):
-        pprint(self.parseData)
-        json.dumps(self.parseData)
+
+        if self.Data is None:
+            messagebox.showerror("Error", "no geojson file loaded")
+
+    def DataParser(self,event):
+        if self.Data is None:
+            messagebox.showwarning("Warning","님 파일로드 안했다니깐..")
+        else:
+            print("Data Parse Logic Start")
+    # end Functions
 
 
 root = Tk()
