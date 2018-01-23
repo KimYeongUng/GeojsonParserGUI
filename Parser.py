@@ -89,7 +89,7 @@ class Myapp:
         self.parse_button = Button(self.file_button_frame, text="parse",
                                    width=button_width, padx=button_padx, pady=button_pady)
         self.parse_button.pack(side=TOP)
-        self.parse_button.bind("<Button-1>", self.DataParser)
+        self.parse_button.bind("<Button-1>", self.dataParser)
 
         # file save button
         self.save_file_button = Button(self.file_button_frame,text="save",
@@ -235,15 +235,16 @@ class Myapp:
 
             with open(open_file_path,'rt',encoding='UTF8') as f: # exception handling
                 self.Data = json.load(f)
-
+                print(type(self.Data))
         except FileNotFoundError as e:
 
-            messagebox.showwarning("File load Warning","No File loaded:\n"+str(e)) # show Error Msg.
+            messagebox.showwarning("File load Warning","No File loaded:\n"+str(e)) # alert Error Msg.
 
         else:
 
             #pprint(self.Data)
             self.file_loaded = True
+            self.showData()
             messagebox.showinfo("Success","Successfully loaded:\n"+open_file_path)
             f.close()
 
@@ -266,6 +267,7 @@ class Myapp:
             SaveFilePath = ''.join(SaveFilePath)
             print(self.savejson)
             print(self.savecsv)
+
             self.initValue()
 
         elif self.savejson is False and self.savecsv is True:
@@ -275,8 +277,10 @@ class Myapp:
             SaveFilePath = ''.join(SaveFilePath)
             print(self.savejson)
             print(self.savecsv)
+
             self.initValue()
 
+    # attribute 변경 함수들
     def setType(self):
         self.type = not self.type
         print(self.type)
@@ -373,16 +377,23 @@ class Myapp:
             print("save file format:CSV")
 
 
-    def showData(self,event):
+    def showData(self):
 
         if self.Data is None:
             messagebox.showerror("Error", "no geojson file loaded")
 
-    def DataParser(self,event):
+    def dataParser(self,event):
         if self.Data is None:
-            messagebox.showwarning("Warning","님 파일로드 안했다니깐..")
+            messagebox.showwarning("Warning","님 파일로드 안했다니깐...")
         else:
             print("Data Parse Logic Start")
+
+            if self.geometry is False:
+                for element in self.Data:
+                    element.pop('geometry',None) # 고쳐라
+
+            pprint(self.Data)
+
     # end Functions
 
 
