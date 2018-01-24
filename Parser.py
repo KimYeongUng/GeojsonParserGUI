@@ -253,13 +253,12 @@ class Myapp:
 
             SaveFile = filedialog.asksaveasfile("w",defaultextension=".geojson")
 
-            print(SaveFile)
-            SaveFile = ''.join(SaveFile)
-            '''
-            with open(SaveFile,"w") as f:
-                json.dump(self.parseData,f)
-                f.close()
-            '''
+            if SaveFile:
+                with open(SaveFile.name,'w',encoding='UTF8') as f:
+                    json.dump(self.parseData,f,ensure_ascii=False,indent="\t")
+
+
+            messagebox.showinfo("Success","Save Success\n"+SaveFile.name)
             print(self.savejson)
             print(self.savecsv)
 
