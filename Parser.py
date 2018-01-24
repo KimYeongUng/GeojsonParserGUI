@@ -110,16 +110,6 @@ class Myapp:
 
 
         # attribute button : CheckBox
-        '''
-        for var,option in enumerate(attribute_buttons):
-            button = Checkbutton(self.attribute_button_frame,
-                                 text=str(option),
-                                 anchor=W
-                                 ) # more to do
-
-            button["width"] = attribute_button_width # 10
-            button.pack(side=TOP,anchor=W)
-        '''
         type_button = Checkbutton(self.attribute_button_frame,
                                   text='type',
                                   anchor=W,
@@ -163,7 +153,7 @@ class Myapp:
                                   width=attribute_button_width).pack(side=TOP)
 
         CoreNum_button = Checkbutton(self.attribute_button_frame,
-                                  text='type',
+                                  text='CoreNum',
                                   anchor=W,
                                   command=self.setCoreNum,
                                   width=attribute_button_width).pack(side=TOP)
@@ -209,7 +199,7 @@ class Myapp:
         # Text Widget - Show Parsed Data
         data_text = Text(self.right_frame,width=100)
         data_text.pack(side=TOP,fill=BOTH,expand=YES)
-        data_text.insert(END,"데헷")
+        data_text.insert(END,"Display Panel")
 
         # right_frame : scroll bar 생성
         yscrollbar = Scrollbar(data_text)
@@ -226,23 +216,22 @@ class Myapp:
     def processOK(self,event):
 
         try:
-
-            open_file_path = filedialog.askopenfilenames(initialdir="C:/Users/LG/Downloads/Swallaby_DATA/Park_Transform",
+            open_file_path = filedialog.askopenfilenames(initialdir="C:/Users/",
                                                          title="choose your file",
                                                          filetypes=(("geojson files", "*.geojson"), ("all files", "*.*")))
 
             open_file_path = ''.join(open_file_path) # format convert to str(string)
 
-            with open(open_file_path,'rt',encoding='UTF8') as f: # exception handling
+            with open(open_file_path,'rt',encoding='UTF8') as f:
                 self.Data = json.load(f)
                 print(type(self.Data))
-        except FileNotFoundError as e:
+                print(self.Data.keys())
+                print(len(self.Data['features']))
 
-            messagebox.showwarning("File load Warning","No File loaded:\n"+str(e)) # alert Error Msg.
+        except FileNotFoundError as e: # exception handling
+            messagebox.showwarning("File load Warning","No File loaded:\n"+str(e)) # alert warning Msg.
 
         else:
-
-            #pprint(self.Data)
             self.file_loaded = True
             self.showData()
             messagebox.showinfo("Success","Successfully loaded:\n"+open_file_path)
@@ -261,20 +250,24 @@ class Myapp:
           messagebox.showinfo("Error","No geojson file loaded")
 
         elif self.savejson is True and self.savecsv is False:
-            SaveFilePath = filedialog.askopenfilenames(initialdir="C:/Users",
-                                                        title="save file",
-                                                        filetypes=(("geojson files","*.geojson"),("all files","*.*")))
-            SaveFilePath = ''.join(SaveFilePath)
+
+            SaveFile = filedialog.asksaveasfile("w",defaultextension=".geojson")
+
+            print(SaveFile)
+            SaveFile = ''.join(SaveFile)
+            '''
+            with open(SaveFile,"w") as f:
+                json.dump(self.parseData,f)
+                f.close()
+            '''
             print(self.savejson)
             print(self.savecsv)
 
             self.initValue()
 
         elif self.savejson is False and self.savecsv is True:
-            SaveFilePath = filedialog.askopenfilenames(initialdir="C:/Users",
-                                                       title="save file",
-                                                       filetypes=(("csv files","*.csv"),("all files","*.*")))
-            SaveFilePath = ''.join(SaveFilePath)
+            SaveFile = filedialog.asksaveasfile("w",defaultextension=".csv")
+
             print(self.savejson)
             print(self.savecsv)
 
@@ -342,6 +335,8 @@ class Myapp:
     """
     def initValue(self):
 
+        self.file_loaded = False
+
         self.savejson = True
         self.savecsv = False
 
@@ -382,17 +377,70 @@ class Myapp:
         if self.Data is None:
             messagebox.showerror("Error", "no geojson file loaded")
 
+    '''
+    function dataParser:
+    parse button click:
+    checkbox에서 선택한 key value들만 파싱
+    파싱한 데이터는 parseData 변수에 저장
+    '''
     def dataParser(self,event):
-        if self.Data is None:
-            messagebox.showwarning("Warning","님 파일로드 안했다니깐...")
+
+        if self.Data is None and self.file_loaded is False:
+            messagebox.showwarning("Warning","파일부터 로드하셔야죠")
         else:
             print("Data Parse Logic Start")
 
-            if self.geometry is False:
-                for element in self.Data:
-                    element.pop('geometry',None) # 고쳐라
+            self.parseData = self.Data
 
-            pprint(self.Data)
+            if self.name is False:
+                self.parseData.pop('name',None)
+
+            if self.geometry is False:
+                for element in self.parseData['features']:
+                    del element['geometry']
+
+            if self.type is False:
+                for element in self.parseData['features']:
+                    del element['type']
+
+            if self.ALIAS is False:
+                for element in self.parseData['features']:
+                    del element['properties']['ALIAS']
+
+            if self.REMARK is False:
+                for element in self.parseData['features']:
+                    del element['properties']['REMARK']
+
+            if self.NTFDATE is False:
+                for element in self.parseData['features']:
+                    del element['properties']['NTFDATE']
+
+            if self.SGG_OID is False:
+                for element in self.parseData['features']:
+                    del element['properties']['SGG_OID']
+
+            if self.COL_ADM_SE is False:
+                for element in self.parseData['features']:
+                    del element['properties']['COL_ADM_SE']
+
+            if self.CoreNum is False:
+                for element in self.parseData['features']:
+                    del element['properties']['CoreNum']
+
+            if self.area is False:
+                for element in self.parseData['features']:
+                    del element['properties']['area']
+
+            if self.perimeter is False:
+                for element in self.parseData['features']:
+                    del element['properties']['perimeter']
+
+            if self.category is False:
+                for element in self.parseData['features']:
+                    del element['properties']['category']
+
+            self.Data = None
+            pprint(self.parseData)
 
     # end Functions
 
