@@ -4,6 +4,8 @@ from tkinter import messagebox
 import json
 import csv
 from pprint import pprint
+import sys
+import os
 
 class Myapp:
 
@@ -110,73 +112,73 @@ class Myapp:
 
 
         # attribute button : CheckBox
-        type_button = Checkbutton(self.attribute_button_frame,
+        self.type_button = Checkbutton(self.attribute_button_frame,
                                   text='type',
                                   anchor=W,
                                   command=self.setType,
                                   width=attribute_button_width).pack(side=TOP)
 
-        name_button = Checkbutton(self.attribute_button_frame,
+        self.name_button = Checkbutton(self.attribute_button_frame,
                                   text='name',
                                   anchor=W,
                                   command=self.setName,
                                   width=attribute_button_width).pack(side=TOP)
 
-        ALIAS_button = Checkbutton(self.attribute_button_frame,
+        self.ALIAS_button = Checkbutton(self.attribute_button_frame,
                                   text='ALIAS',
                                   anchor=W,
                                    command=self.setALIAS,
                                   width=attribute_button_width).pack(side=TOP)
 
-        REMARK_button = Checkbutton(self.attribute_button_frame,
+        self.REMARK_button = Checkbutton(self.attribute_button_frame,
                                   text='REMARK',
                                   anchor=W,
                                   command=self.setRemark,
                                   width=attribute_button_width).pack(side=TOP)
 
-        NTFDATE_button = Checkbutton(self.attribute_button_frame,
+        self.NTFDATE_button = Checkbutton(self.attribute_button_frame,
                                   text='NTFDATE',
                                   anchor=W,
                                   command=self.setNTFDATE,
                                   width=attribute_button_width).pack(side=TOP)
 
-        SGG_OID_button = Checkbutton(self.attribute_button_frame,
+        self.SGG_OID_button = Checkbutton(self.attribute_button_frame,
                                   text='SGG_OID',
                                   anchor=W,
                                   command=self.setSGG_OID,
                                   width=attribute_button_width).pack(side=TOP)
 
-        COL_ASM_SE_button = Checkbutton(self.attribute_button_frame,
+        self.COL_ASM_SE_button = Checkbutton(self.attribute_button_frame,
                                   text='COL_ASM_SE',
                                   anchor=W,
                                   command=self.setCOL_ADM_SE,
                                   width=attribute_button_width).pack(side=TOP)
 
-        CoreNum_button = Checkbutton(self.attribute_button_frame,
+        self.CoreNum_button = Checkbutton(self.attribute_button_frame,
                                   text='CoreNum',
                                   anchor=W,
                                   command=self.setCoreNum,
                                   width=attribute_button_width).pack(side=TOP)
 
-        area_button = Checkbutton(self.attribute_button_frame,
+        self.area_button = Checkbutton(self.attribute_button_frame,
                                   text='area',
                                   anchor=W,
                                   command=self.setArea,
                                   width=attribute_button_width).pack(side=TOP)
 
-        perimeter_button = Checkbutton(self.attribute_button_frame,
+        self.perimeter_button = Checkbutton(self.attribute_button_frame,
                                   text='perimeter',
                                   anchor=W,
                                   command=self.setPerimeter,
                                   width=attribute_button_width).pack(side=TOP)
 
-        category_button = Checkbutton(self.attribute_button_frame,
+        self.category_button = Checkbutton(self.attribute_button_frame,
                                   text='category',
                                   anchor=W,
                                   command=self.setCategory,
                                   width=attribute_button_width).pack(side=TOP)
 
-        geometry_button = Checkbutton(self.attribute_button_frame,
+        self.geometry_button = Checkbutton(self.attribute_button_frame,
                                   text='geometry',
                                   anchor=W,
                                   command=self.setGeometry,
@@ -211,7 +213,7 @@ class Myapp:
     # functions
     """
     function processOK:
-    file load method - geojson valid
+    file load method - only geojson file valid
     """
     def processOK(self,event):
 
@@ -247,7 +249,7 @@ class Myapp:
 
         if self.file_loaded is False:
 
-          messagebox.showinfo("Error","No geojson file loaded")
+          messagebox.showwarning("warning","No geojson file loaded")
 
         elif self.savejson is True and self.savecsv is False:
 
@@ -258,19 +260,42 @@ class Myapp:
                     json.dump(self.parseData,f,ensure_ascii=False,indent="\t")
 
 
+            messagebox.showinfo("Success","Successfully Saved\n"+SaveFile.name)
+            print(self.savejson)
+            print(self.savecsv)
+
+            self.restart_program()
+
+        elif self.savejson is False and self.savecsv is True:
+
+            if self.file_loaded is False:
+
+                messagebox.showwarning("warining","No geojson file loaded")
+
+            elif self.savecsv is True and self.savejson is False:
+
+                # delete geometry info (type,coordinates)
+                if self.geometry is True:
+                    for element in self.parseData['features']:
+                        del element['geometry']
+
+                SaveFile = filedialog.asksaveasfile("w",defaultextension=".csv")
+
+                if SaveFile:
+                    with open(SaveFile.name,'w',encoding='UTF8') as f:
+                        output = csv.writer(f)
+                        output.writerow(self.parseData.keys())
+
+                        for row in self.parseData:
+                            output.writerow(row.values())
+
+
+
             messagebox.showinfo("Success","Save Success\n"+SaveFile.name)
             print(self.savejson)
             print(self.savecsv)
 
-            self.initValue()
-
-        elif self.savejson is False and self.savecsv is True:
-            SaveFile = filedialog.asksaveasfile("w",defaultextension=".csv")
-
-            print(self.savejson)
-            print(self.savecsv)
-
-            self.initValue()
+            self.restart_program()
 
     # attribute 변경 함수들
     def setType(self):
@@ -375,7 +400,6 @@ class Myapp:
 
         if self.Data is None:
             messagebox.showerror("Error", "no geojson file loaded")
-
     '''
     function dataParser:
     parse button click:
@@ -385,7 +409,7 @@ class Myapp:
     def dataParser(self,event):
 
         if self.Data is None and self.file_loaded is False:
-            messagebox.showwarning("Warning","파일부터 로드하셔야죠")
+            messagebox.showwarning("Warning","파일 로드하세용")
         else:
             print("Data Parse Logic Start")
 
@@ -439,8 +463,17 @@ class Myapp:
                     del element['properties']['category']
 
             self.Data = None
-            pprint(self.parseData)
+            #pprint(self.parseData)
 
+    """
+    function:restart_program
+    Restarts the current program.
+    Note: this function doesn't return. Any cleanup action (like
+    saving data) must be done before calling this function.
+    """
+    def restart_program(self):
+        path = sys.executable
+        os.execl(path,path,*sys.argv)
     # end Functions
 
 
